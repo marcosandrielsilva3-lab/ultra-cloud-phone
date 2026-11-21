@@ -48,13 +48,15 @@ jobs:
       - name: Build Android APK
         run: gradle --no-daemon --stacktrace assembleDebug
 
-      - name: Prepare clean download files
+      - name: Prepare and verify download files
         run: |
           mkdir -p release
           cp app/build/outputs/apk/debug/app-debug.apk release/UltraCloudPhone.apk
           zip -j release/UltraCloudPhone-Server-Installer.zip README.md install.sh start.sh stop.sh status.sh LICENSE
           test -s release/UltraCloudPhone.apk
-          file release/UltraCloudPhone.apk
+          test -s release/UltraCloudPhone-Server-Installer.zip
+          zip -T release/UltraCloudPhone-Server-Installer.zip
+          aapt dump badging release/UltraCloudPhone.apk | grep -F "package: name='com.ultracloud.phone' versionCode='2' versionName='0.2.0'"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -74,12 +76,13 @@ jobs:
         if: github.event_name == 'push' && contains(github.event.head_commit.message, 'Publish APK download')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.1.${{ github.run_number }}
-          name: Ultra Cloud Phone v0.1.${{ github.run_number }}
+          tag_name: v0.2.${{ github.run_number }}
+          name: Ultra Cloud Phone v0.2.${{ github.run_number }}
           body: |
-            APK cliente Android para abrir noVNC dentro do app.
-            Requer servidor Android virtual previamente configurado.
-            Este APK não é um servidor Android nem contém jogos.
+            Aplicativo cliente Android versão 0.2.0.
+            Inclui correções de layout e instruções claras sobre o endereço noVNC.
+            Também inclui o pacote ZIP do instalador do servidor experimental.
+            O APK ainda requer uma VM compatível configurada e ligada; ele não cria a máquina na nuvem.
           files: |
             release/UltraCloudPhone.apk
             release/UltraCloudPhone-Server-Installer.zip

@@ -1,4 +1,4 @@
-name: Build Ultra Cloud Phone APK
+name: Build Ultra Cloud Play test APK
 
 on:
   push:
@@ -22,13 +22,6 @@ jobs:
           bash -n stop.sh
           bash -n status.sh
 
-      - name: Check private service port bindings
-        run: |
-          grep -F -- '--publish 127.0.0.1:5555:5555' install.sh
-          grep -F -- '--publish "$TAIL_IP:5800:5800"' install.sh
-          grep -F -- '--publish "$TAIL_IP:5900:5900"' install.sh
-          ! grep -E -- '--publish[[:space:]]+5555:5555' install.sh
-
       - name: Set up Java
         uses: actions/setup-java@v5
         with:
@@ -51,29 +44,31 @@ jobs:
       - name: Prepare and verify APK
         run: |
           mkdir -p release
-          cp app/build/outputs/apk/debug/app-debug.apk release/UltraCloudPhone.apk
-          test -s release/UltraCloudPhone.apk
+          cp app/build/outputs/apk/debug/app-debug.apk release/UltraCloudPlay.apk
+          test -s release/UltraCloudPlay.apk
           AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
           test -x "$AAPT"
-          "$AAPT" dump badging release/UltraCloudPhone.apk | grep -F "package: name='com.ultracloud.phone' versionCode='3' versionName='0.2.1'"
+          "$AAPT" dump badging release/UltraCloudPlay.apk | grep -F "package: name='com.ultracloud.phone' versionCode='4' versionName='0.3.0'"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: UltraCloudPhone-APK
-          path: release/UltraCloudPhone.apk
+          name: UltraCloudPlay-APK
+          path: release/UltraCloudPlay.apk
           retention-days: 30
 
       - name: Publish APK-only GitHub Release
         if: github.event_name == 'push' && contains(github.event.head_commit.message, 'Publish APK download')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.2.${{ github.run_number }}
-          name: Ultra Cloud Phone v0.2.${{ github.run_number }}
+          tag_name: v0.3.${{ github.run_number }}
+          name: Ultra Cloud Play v0.3.${{ github.run_number }}
           body: |
-            Download único: UltraCloudPhone.apk.
-            Este é o aplicativo Android instalável.
-            O app cliente ainda precisa de um servidor Android remoto configurado para conectar.
+            Download único: UltraCloudPlay.apk.
+            Iniciador de teste para Roblox na nuvem via EasyFun.
+            O jogo é executado nos servidores de terceiros da EasyFun.
+            Limite informado pela EasyFun: até 6 horas por dia com login; pode mudar.
+            Este APK não fornece servidor próprio nem tempo ilimitado.
           files: |
-            release/UltraCloudPhone.apk
+            release/UltraCloudPlay.apk
           make_latest: true

@@ -2,9 +2,8 @@ package com.ultracloud.phone;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -12,42 +11,22 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
-import android.webkit.SslErrorHandler;
-import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.net.http.SslError;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
-    private static final String PREF_URL = "last_server_url";
-    private static final int BG = Color.rgb(10, 16, 23);
-    private static final int CARD = Color.rgb(20, 29, 39);
+    private static final String ROBLOX_URL = "https://www.easyfun.gg/cloud-games/roblox.html";
+    private static final String FAQ_URL = "https://www.easyfun.gg/faq.html";
+
+    private static final int BG = Color.rgb(9, 15, 22);
+    private static final int CARD = Color.rgb(19, 29, 40);
     private static final int GREEN = Color.rgb(115, 230, 160);
     private static final int WHITE = Color.rgb(240, 246, 250);
-    private static final int MUTED = Color.rgb(160, 174, 188);
-
-    private FrameLayout root;
-    private LinearLayout homeScreen;
-    private LinearLayout viewerScreen;
-    private EditText addressInput;
-    private TextView statusText;
-    private TextView viewerStatus;
-    private ProgressBar progress;
-    private WebView webView;
+    private static final int MUTED = Color.rgb(164, 179, 194);
+    private static final int AMBER = Color.rgb(245, 195, 110);
 
     @Override
     protected void onCreate(Bundle state) {
@@ -91,201 +70,6 @@ public class MainActivity extends Activity {
         return p;
     }
 
-    private void buildInterface() {
-        root = new FrameLayout(this);
-        root.setBackgroundColor(BG);
-        setContentView(root);
-
-        homeScreen = column();
-        homeScreen.setPadding(dp(22), dp(30), dp(22), dp(24));
-        ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(true);
-        scroll.setClipToPadding(false);
-        scroll.addView(homeScreen);
-        root.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
-
-        TextView brand = text("ULTRA CLOUD PHONE", 13, GREEN, true);
-        brand.setLetterSpacing(0.12f);
-        homeScreen.addView(brand, spaced(-1, -2, 18));
-
-        TextView title = text("Seu Android na nuvem", 27, WHITE, true);
-        homeScreen.addView(title, spaced(-1, -2, 8));
-
-        TextView subtitle = text(
-            "Acesse um Android remoto pela internet e controle a tela pelo seu celular.",
-            14, MUTED, false
-        );
-        subtitle.setLineSpacing(dp(3), 1f);
-        homeScreen.addView(subtitle, spaced(-1, -2, 24));
-
-        LinearLayout card = column();
-        card.setPadding(dp(16), dp(18), dp(16), dp(16));
-        card.setBackground(rounded(CARD, 18, Color.rgb(39, 54, 68)));
-        homeScreen.addView(card, spaced(-1, -2, 14));
-
-        TextView label = text("ENDEREÇO DO SERVIDOR", 11, GREEN, true);
-        label.setLetterSpacing(0.08f);
-        card.addView(label, spaced(-1, -2, 10));
-
-        addressInput = new EditText(this);
-        addressInput.setSingleLine(true);
-        addressInput.setTextSize(14);
-        addressInput.setTextColor(WHITE);
-        addressInput.setHintTextColor(MUTED);
-        addressInput.setHint("http://100.x.x.x:5800/vnc.html");
-        addressInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT |
-            android.text.InputType.TYPE_TEXT_VARIATION_URI);
-        addressInput.setImeOptions(EditorInfo.IME_ACTION_GO);
-        addressInput.setPadding(dp(12), dp(13), dp(12), dp(13));
-        addressInput.setBackground(rounded(Color.rgb(10, 16, 23), 10, Color.rgb(54, 72, 89)));
-        String saved = getPreferences(MODE_PRIVATE).getString(PREF_URL, "");
-        addressInput.setText(saved);
-        card.addView(addressInput, spaced(-1, -2, 12));
-
-        Button connect = button("CONECTAR À NUVEM", true);
-        card.addView(connect, spaced(-1, dp(50), 0));
-        connect.setOnClickListener(v -> connectToServer());
-        addressInput.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_GO) {
-                connectToServer();
-                return true;
-            }
-            return false;
-        });
-
-        Button help = button("AINDA NÃO TENHO UM SERVIDOR", false);
-        homeScreen.addView(help, spaced(-1, dp(48), 16));
-        help.setOnClickListener(v -> showServerHelp());
-
-        statusText = text("●  Servidor não conectado", 13, MUTED, false);
-        homeScreen.addView(statusText, spaced(-1, -2, 20));
-
-        TextView noteTitle = text("COMO FUNCIONA", 12, WHITE, true);
-        homeScreen.addView(noteTitle, spaced(-1, -2, 8));
-
-        TextView note = text(
-            "1. Primeiro, uma máquina na nuvem precisa executar o Android virtual.\n" +
-            "2. O servidor mostra um endereço noVNC no final da instalação.\n" +
-            "3. O celular e o servidor precisam estar na mesma rede privada Tailscale.\n" +
-            "4. Cole aqui o endereço noVNC e toque em Conectar.",
-            13, MUTED, false
-        );
-        note.setLineSpacing(dp(5), 1f);
-        homeScreen.addView(note, spaced(-1, -2, 18));
-
-        TextView warning = text(
-            "IMPORTANTE: este APK é o controle remoto. Ele não cria sozinho a máquina na nuvem e não executa jogos sem um servidor Android ligado.",
-            12, Color.rgb(238, 190, 112), false
-        );
-        warning.setPadding(dp(12), dp(12), dp(12), dp(12));
-        warning.setLineSpacing(dp(3), 1f);
-        warning.setBackground(rounded(Color.rgb(43, 35, 24), 12, Color.rgb(86, 65, 38)));
-        homeScreen.addView(warning, spaced(-1, -2, 0));
-
-        buildViewerScreen();
-    }
-
-    private void showServerHelp() {
-        String message =
-            "Esse campo NÃO recebe link de vídeo, link do GitHub ou endereço de um site comum.\n\n" +
-            "Ele recebe o endereço do painel noVNC, que só existe depois que o servidor Android é instalado e ligado.\n\n" +
-            "O processo é: criar uma máquina Ubuntu ARM64 compatível na nuvem, instalar o servidor Ultra Cloud Phone nela, entrar na mesma rede privada Tailscale pelo celular e copiar o endereço que o instalador mostrar no final.\n\n" +
-            "Exemplo de formato: http://100.x.x.x:5800/vnc.html\n\n" +
-            "Sem essa máquina pronta, deixe o campo vazio. O APK sozinho não fornece um Android remoto.";
-        new AlertDialog.Builder(this)
-            .setTitle("Como conseguir o endereço")
-            .setMessage(message)
-            .setPositiveButton("ABRIR GUIA COMPLETO", (dialog, which) -> {
-                try {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(
-                        "https://github.com/marcosandrielsilva3-lab/ultra-cloud-phone#preparar-o-servidor-android-virtual"
-                    ));
-                    startActivity(intent);
-                } catch (Exception e) {
-                    Toast.makeText(this, "Não foi possível abrir o guia.", Toast.LENGTH_LONG).show();
-                }
-            })
-            .setNegativeButton("FECHAR", null)
-            .show();
-    }
-
-    private void buildViewerScreen() {
-        viewerScreen = column();
-        viewerScreen.setVisibility(View.GONE);
-
-        LinearLayout toolbar = new LinearLayout(this);
-        toolbar.setGravity(Gravity.CENTER_VERTICAL);
-        toolbar.setPadding(dp(12), dp(8), dp(12), dp(8));
-        toolbar.setBackgroundColor(CARD);
-
-        Button back = smallButton("VOLTAR");
-        toolbar.addView(back, new LinearLayout.LayoutParams(dp(86), dp(42)));
-        back.setOnClickListener(v -> showHome("Desconectado"));
-
-        viewerStatus = text("Conectando...", 13, WHITE, true);
-        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(0, -2, 1f);
-        statusParams.leftMargin = dp(12);
-        toolbar.addView(viewerStatus, statusParams);
-        viewerScreen.addView(toolbar, new LinearLayout.LayoutParams(-1, dp(58)));
-
-        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        progress.setMax(100);
-        progress.setProgressTintList(android.content.res.ColorStateList.valueOf(GREEN));
-        viewerScreen.addView(progress, new LinearLayout.LayoutParams(-1, dp(3)));
-
-        webView = new WebView(this);
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setDatabaseEnabled(true);
-        settings.setLoadWithOverviewMode(true);
-        settings.setUseWideViewPort(true);
-        settings.setSupportZoom(true);
-        settings.setBuiltInZoomControls(true);
-        settings.setDisplayZoomControls(false);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
-        settings.setAllowFileAccess(false);
-        settings.setAllowContentAccess(false);
-        webView.setBackgroundColor(Color.BLACK);
-        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override public void onProgressChanged(WebView view, int newProgress) {
-                progress.setProgress(newProgress);
-                progress.setVisibility(newProgress >= 100 ? View.GONE : View.VISIBLE);
-            }
-        });
-        webView.setWebViewClient(new WebViewClient() {
-            @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
-                viewerStatus.setText("Carregando painel...");
-                progress.setVisibility(View.VISIBLE);
-            }
-
-            @Override public void onPageFinished(WebView view, String url) {
-                viewerStatus.setText("Painel aberto — informe a senha VNC se pedir");
-            }
-
-            @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                if (request.isForMainFrame()) {
-                    viewerStatus.setText("Falha ao abrir. Confira servidor e Tailscale.");
-                }
-            }
-
-            @Override public void onReceivedHttpError(WebView view, WebResourceRequest request,
-                                                       android.webkit.WebResourceResponse response) {
-                if (request.isForMainFrame()) {
-                    viewerStatus.setText("Servidor respondeu com erro HTTP " + response.getStatusCode());
-                }
-            }
-
-            @Override public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                handler.cancel();
-                Toast.makeText(MainActivity.this, "Certificado HTTPS inválido. Conexão recusada.", Toast.LENGTH_LONG).show();
-            }
-        });
-        viewerScreen.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1f));
-        root.addView(viewerScreen, new FrameLayout.LayoutParams(-1, -1));
-    }
-
     private Button button(String label, boolean primary) {
         Button b = new Button(this);
         b.setText(label);
@@ -293,94 +77,120 @@ public class MainActivity extends Activity {
         b.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         b.setAllCaps(false);
         b.setTextColor(primary ? BG : WHITE);
-        b.setBackground(rounded(primary ? GREEN : CARD, 12, primary ? 0 : Color.rgb(54, 72, 89)));
+        b.setMinHeight(dp(50));
+        b.setBackground(rounded(primary ? GREEN : CARD, 12,
+            primary ? 0 : Color.rgb(54, 72, 89)));
         return b;
     }
 
-    private Button smallButton(String label) {
-        Button b = button(label, false);
-        b.setTextSize(11);
-        b.setPadding(dp(4), 0, dp(4), 0);
-        return b;
+    private void buildInterface() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setClipToPadding(false);
+        scroll.setBackgroundColor(BG);
+
+        LinearLayout page = column();
+        page.setPadding(dp(22), dp(30), dp(22), dp(28));
+        scroll.addView(page, new ScrollView.LayoutParams(-1, -2));
+        setContentView(scroll);
+
+        TextView brand = text("ULTRA CLOUD PLAY  •  TESTE", 12, GREEN, true);
+        brand.setLetterSpacing(0.10f);
+        page.addView(brand, spaced(-1, -2, 17));
+
+        TextView title = text("Roblox na nuvem", 29, WHITE, true);
+        page.addView(title, spaced(-1, -2, 8));
+
+        TextView subtitle = text(
+            "Seu celular recebe a imagem e envia os comandos. O Roblox roda nos servidores remotos da EasyFun.",
+            15, MUTED, false
+        );
+        subtitle.setLineSpacing(dp(4), 1f);
+        page.addView(subtitle, spaced(-1, -2, 22));
+
+        LinearLayout planCard = column();
+        planCard.setPadding(dp(16), dp(17), dp(16), dp(16));
+        planCard.setBackground(rounded(CARD, 17, Color.rgb(42, 59, 74)));
+        page.addView(planCard, spaced(-1, -2, 14));
+
+        TextView planTitle = text("ACESSO GRATUITO DA EASYFUN", 11, GREEN, true);
+        planTitle.setLetterSpacing(0.07f);
+        planCard.addView(planTitle, spaced(-1, -2, 9));
+
+        TextView plan = text(
+            "• Até 6 horas por dia com conta conectada\n" +
+            "• 30 minutos por dia como visitante\n" +
+            "• Pode haver fila e o tempo pode mudar conforme os servidores",
+            14, WHITE, false
+        );
+        plan.setLineSpacing(dp(5), 1f);
+        planCard.addView(plan, spaced(-1, -2, 0));
+
+        Button play = button("ABRIR ROBLOX NA NUVEM", true);
+        page.addView(play, spaced(-1, dp(54), 12));
+        play.setOnClickListener(v -> confirmAndOpen());
+
+        Button rules = button("REGRAS E TEMPO GRATUITO", false);
+        page.addView(rules, spaced(-1, dp(50), 18));
+        rules.setOnClickListener(v -> openUrl(FAQ_URL));
+
+        LinearLayout safetyCard = column();
+        safetyCard.setPadding(dp(15), dp(15), dp(15), dp(14));
+        safetyCard.setBackground(rounded(Color.rgb(42, 34, 23), 14,
+            Color.rgb(93, 69, 37)));
+        page.addView(safetyCard, spaced(-1, -2, 13));
+
+        TextView safetyTitle = text("IMPORTANTE: USE A VERSÃO GLOBAL", 12, AMBER, true);
+        safetyCard.addView(safetyTitle, spaced(-1, -2, 7));
+
+        TextView safety = text(
+            "Não escolha Roblox VNG/Vietnã. A própria EasyFun alerta que entrar nessa versão pode transferir permanentemente a conta para o servidor VNG. Escolha a versão global.",
+            13, WHITE, false
+        );
+        safety.setLineSpacing(dp(4), 1f);
+        safetyCard.addView(safety, spaced(-1, -2, 0));
+
+        TextView privacy = text(
+            "LOGIN E SEGURANÇA\n" +
+            "O botão abre easyfun.gg no navegador. Confira se o endereço é exatamente easyfun.gg antes de entrar. Não compartilhe códigos de verificação e não reutilize a senha de outros serviços.",
+            13, MUTED, false
+        );
+        privacy.setLineSpacing(dp(4), 1f);
+        page.addView(privacy, spaced(-1, -2, 17));
+
+        TextView limitation = text(
+            "Este APK é um iniciador independente. Ele não contém servidores de nuvem e não remove os limites da EasyFun. O serviço externo é necessário para executar o Roblox.",
+            12, MUTED, false
+        );
+        limitation.setPadding(dp(12), dp(12), dp(12), dp(12));
+        limitation.setBackground(rounded(Color.rgb(17, 25, 34), 12,
+            Color.rgb(39, 54, 68)));
+        limitation.setLineSpacing(dp(3), 1f);
+        page.addView(limitation, spaced(-1, -2, 0));
     }
 
-    private void connectToServer() {
-        String raw = addressInput.getText().toString().trim();
-        if (raw.isEmpty()) {
-            addressInput.setError("Este campo precisa do endereço noVNC do servidor, não de um vídeo.");
-            return;
-        }
-        String url = normaliseUrl(raw);
-        if (url == null) {
-            addressInput.setError("Use um IP ou endereço HTTP/HTTPS válido do painel noVNC.");
-            return;
-        }
-        getPreferences(MODE_PRIVATE).edit().putString(PREF_URL, raw).apply();
-        try {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) imm.hideSoftInputFromWindow(addressInput.getWindowToken(), 0);
-        } catch (Exception ignored) { }
-        statusText.setText("●  Conectando...");
-        viewerStatus.setText("Abrindo servidor...");
-        homeScreen.setVisibility(View.GONE);
-        viewerScreen.setVisibility(View.VISIBLE);
-        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        webView.loadUrl(url);
+    private void confirmAndOpen() {
+        new AlertDialog.Builder(this)
+            .setTitle("Abrir Roblox na EasyFun")
+            .setMessage(
+                "O jogo será executado nos servidores da EasyFun, não no seu celular. " +
+                "A regra informada pela plataforma é até 6 horas grátis por dia com login " +
+                "ou 30 minutos como visitante.\n\n" +
+                "Na página, escolha Roblox global. Não escolha Roblox VNG/Vietnã."
+            )
+            .setNegativeButton("VOLTAR", null)
+            .setPositiveButton("CONTINUAR", (dialog, which) -> openUrl(ROBLOX_URL))
+            .show();
     }
 
-    private String normaliseUrl(String raw) {
+    private void openUrl(String url) {
         try {
-            String value = raw.contains("://") ? raw : "http://" + raw;
-            Uri uri = Uri.parse(value);
-            String scheme = uri.getScheme();
-            if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) return null;
-            if (uri.getHost() == null || uri.getUserInfo() != null) return null;
-
-            Uri.Builder b = uri.buildUpon();
-            if (uri.getPort() == -1) {
-                String host = uri.getHost();
-                String safeHost = host.contains(":") ? "[" + host + "]" : host;
-                b.encodedAuthority(safeHost + ":5800");
-            }
-            String path = uri.getPath();
-            if (path == null || path.isEmpty() || path.equals("/")) b.path("/vnc.html");
-            if (uri.getQueryParameter("autoconnect") == null) b.appendQueryParameter("autoconnect", "true");
-            if (uri.getQueryParameter("host") == null) b.appendQueryParameter("host", uri.getHost());
-            if (uri.getQueryParameter("port") == null) b.appendQueryParameter("port", "5900");
-            return b.build().toString();
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(Intent.createChooser(intent, "Abrir no navegador"));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Nenhum navegador foi encontrado.", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            return null;
+            Toast.makeText(this, "Não foi possível abrir o serviço.", Toast.LENGTH_LONG).show();
         }
-    }
-
-    private void showHome(String message) {
-        if (webView != null) {
-            webView.stopLoading();
-            webView.loadUrl("about:blank");
-        }
-        getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        viewerScreen.setVisibility(View.GONE);
-        homeScreen.setVisibility(View.VISIBLE);
-        statusText.setText("●  " + message);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (viewerScreen != null && viewerScreen.getVisibility() == View.VISIBLE) {
-            if (webView != null && webView.canGoBack()) webView.goBack();
-            else showHome("Desconectado");
-            return;
-        }
-        super.onBackPressed();
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (webView != null) {
-            webView.stopLoading();
-            webView.destroy();
-            webView = null;
-        }
-        super.onDestroy();
     }
 }

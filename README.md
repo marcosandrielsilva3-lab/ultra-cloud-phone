@@ -1,57 +1,46 @@
-# Ultra Cloud Phone
-
-**Aplicativo Android cliente.**
+# Ultra Cloud Play — teste de Roblox na nuvem
 
 ## Download
 
-Baixe e instale somente o arquivo **UltraCloudPhone.apk** na página de versões:
-
+A versão de teste instalável é **UltraCloudPlay.apk**:
 https://github.com/marcosandrielsilva3-lab/ultra-cloud-phone/releases/latest
 
-Não há instalador de servidor para instalar no Android. Arquivos `.sh`, ZIP e código-fonte não são aplicativos Android.
+## O que esta versão faz
 
-## O que o aplicativo faz
+O APK é um iniciador Android leve. Ao tocar em **Abrir Roblox na nuvem**, ele abre o navegador no serviço EasyFun, que executa o jogo em servidores remotos. O celular recebe a transmissão e envia os comandos.
 
-O Ultra Cloud Phone abre, dentro do app, o painel noVNC de um Android virtual remoto. Ele permite informar o endereço do servidor, conectar e controlar a tela remota.
+**Esta versão não possui servidores próprios.** Ela usa a infraestrutura de terceiros da EasyFun. Por isso, não é um serviço ilimitado nem uma cópia independente do CloudMoon.
 
-O aplicativo não cria nem hospeda sozinho uma máquina Android na nuvem. Para a conexão funcionar, ainda é necessário configurar uma máquina Linux compatível em um serviço de nuvem e executar nela os componentes do servidor.
+## Limites informados pela EasyFun
 
-## Endereço do servidor
+Na data da versão de teste (21 de novembro de 2026), a FAQ da EasyFun informa:
+- Visitantes: 30 minutos por dia.
+- Usuários conectados: até 6 horas por dia.
+- Pode haver fila conforme a capacidade dos servidores.
 
-O campo do aplicativo recebe o endereço noVNC fornecido pelo servidor depois da configuração. O formato costuma ser parecido com:
+As regras podem mudar. Consulte:
+https://www.easyfun.gg/faq.html
 
-```
-http://100.x.x.x:5800/vnc.html
-```
+Página do Roblox:
+https://www.easyfun.gg/cloud-games/roblox.html
 
-Esse endereço é apenas um exemplo, não é um servidor real. Não cole link de vídeo ou link do GitHub. Até existir um servidor configurado e ligado, deixe o campo vazio.
+## Como testar no celular
 
-## Servidor (etapa técnica separada)
+1. Instale o APK.
+2. Abra **Ultra Cloud Play** e toque em **Abrir Roblox na nuvem**.
+3. O site será aberto no navegador. Use a conta no próprio site oficial, se decidir entrar.
+4. Escolha a versão global de Roblox. **Não selecione Roblox VNG/Vietnã**: a EasyFun alerta que entrar nessa versão pode transferir permanentemente a conta para VNG.
+5. Comece com qualidade de transmissão baixa/Smooth se a conexão estiver instável.
 
-O servidor experimental foi preparado para Ubuntu Server 22.04/24.04 ARM64 com dispositivos Binder disponíveis no kernel. A instalação deve ser feita no terminal SSH da VM, não no telefone.
+## Segurança
 
-Os scripts técnicos estão no repositório para quem estiver configurando a VM:
+- Confira o domínio `easyfun.gg` antes de inserir qualquer dado.
+- Nunca compartilhe códigos de verificação.
+- Não reutilize a senha de outros serviços.
+- Este APK não recebe nem armazena sua senha do Roblox.
 
-```bash
-git clone https://github.com/marcosandrielsilva3-lab/ultra-cloud-phone.git
-cd ultra-cloud-phone
-sudo bash install.sh
-```
+## Limitações
 
-O processo exige autorizar o dispositivo servidor no Tailscale e executar novamente o instalador. O celular também precisa entrar na mesma rede privada.
-
-## Limitações e segurança
-
-- A VM gratuita ARM64 pode não estar disponível, e o kernel pode não oferecer Binder.
-- Redroid fornece a camada Android; VNC/noVNC é uma ponte separada. A transmissão precisa ser validada numa VM real.
-- A captura fallback não substitui aceleração gráfica. Sem GPU compatível, o desempenho pode ser limitado.
-- Não há garantia de FPS, ausência de lag, Play Integrity ou compatibilidade com todos os jogos.
-- ADB fica somente em localhost. Não abra a porta 5555 na internet.
-- VNC/noVNC devem permanecer dentro da rede privada Tailscale. Não exponha as portas 5800/5900 no IP público.
-- O APK é o cliente remoto, não contém um Android virtual nem jogos.
-
-## Componentes do projeto
-
-- Redroid: https://github.com/remote-android/redroid-doc
-- droidVNC-NG: https://github.com/bk138/droidVNC-NG
-- Tailscale: https://tailscale.com/docs
+- A disponibilidade, a fila, o ping, a qualidade e o limite de tempo dependem da EasyFun.
+- Este APK não cria uma máquina remota, não hospeda Roblox e não aumenta o tempo grátis.
+- O código antigo de servidor experimental Redroid/noVNC permanece no repositório, mas não é usado nesta versão de teste.

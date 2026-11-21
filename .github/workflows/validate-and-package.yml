@@ -1,36 +1,50 @@
-name: Validate and package
+name: Validate and package installer
 
 on:
   push:
-  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Validate Bash syntax
-        run: bash -n server/*.sh tests/*.sh
-      - name: Static safety checks
-        run: bash tests/static-checks.sh
-
   package:
-    needs: validate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Package server kit
-        run: zip -r ultra-cloud-phone-server-kit.zip README.md LICENSE server tests docs .github
-      - name: Upload artifact
+
+      - name: Validate shell scripts
+        run: |
+          bash -n install.sh
+          bash -n start.sh
+          bash -n stop.sh
+          bash -n status.sh
+
+      - name: Check that service ports are private
+        run: |
+          grep -F -- '--publish 127.0.0.1:5555:5555' install.sh
+          grep -F -- '--publish "$TAIL_IP:5800:5800"' install.sh
+          grep -F -- '--publish "$TAIL_IP:5900:5900"' install.sh
+          ! grep -E -- '--publish[[:space:]]+5555:5555' install.sh
+
+      - name: Create clean one-level installer ZIP
+        run: |
+          zip -j ultra-cloud-phone-installer.zip README.md install.sh start.sh stop.sh status.sh LICENSE
+
+      - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ultra-cloud-phone-server-kit
-          path: ultra-cloud-phone-server-kit.zip
-          if-no-files-found: error
-          retention-days: 14
+          name: ultra-cloud-phone-installer
+          path: ultra-cloud-phone-installer.zip
+          retention-days: 30
+
+      - name: Publish downloadable GitHub Release
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'Publish GitHub download')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: installer-${{ github.run_number }}
+          name: Ultra Cloud Phone installer ${{ github.run_number }}
+          files: ultra-cloud-phone-installer.zip
+          make_latest: true

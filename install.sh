@@ -128,7 +128,8 @@ adb -s 127.0.0.1:5555 shell am start-foreground-service \
   --es "$PKG.EXTRA_ACCESS_KEY" "$ACCESS_KEY" \
   --ei "$PKG.EXTRA_PORT" 5900 \
   --es "$PKG.EXTRA_PASSWORD" "$VNC_PASSWORD" \
-  --ez "$PKG.EXTRA_VIEW_ONLY" false
+  --ez "$PKG.EXTRA_VIEW_ONLY" false \
+  --ez "$PKG.EXTRA_FALLBACK_SCREEN_CAPTURE" true
 
 say 'Testando a página noVNC.'
 WEB_OK=0

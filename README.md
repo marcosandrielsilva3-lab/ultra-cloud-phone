@@ -1,6 +1,6 @@
 # Ultra Cloud Phone
 
-**Versão 0.3 — primeira tentativa de Cloud Phone controlável pelo navegador.**
+**Versão 0.3.1 — primeiro instalador integrado de Cloud Phone controlável pelo navegador.**
 
 O projeto monta um Android virtual no servidor e permite controlá-lo pelo navegador do celular usando Redroid + droidVNC-NG/noVNC + Tailscale.
 

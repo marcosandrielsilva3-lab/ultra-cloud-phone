@@ -1,4 +1,4 @@
-name: Build APK and package server installer
+name: Build Ultra Cloud Phone APK
 
 on:
   push:
@@ -48,15 +48,11 @@ jobs:
       - name: Build Android APK
         run: gradle --no-daemon --stacktrace assembleDebug
 
-      - name: Prepare and verify direct downloads
+      - name: Prepare and verify APK
         run: |
           mkdir -p release
           cp app/build/outputs/apk/debug/app-debug.apk release/UltraCloudPhone.apk
-          cp install.sh release/UltraCloudPhone-Server-Installer.sh
-          chmod 755 release/UltraCloudPhone-Server-Installer.sh
-          bash -n release/UltraCloudPhone-Server-Installer.sh
           test -s release/UltraCloudPhone.apk
-          test -s release/UltraCloudPhone-Server-Installer.sh
           AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
           test -x "$AAPT"
           "$AAPT" dump badging release/UltraCloudPhone.apk | grep -F "package: name='com.ultracloud.phone' versionCode='2' versionName='0.2.0'"
@@ -68,25 +64,16 @@ jobs:
           path: release/UltraCloudPhone.apk
           retention-days: 30
 
-      - name: Upload single-file server installer artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: UltraCloudPhone-Server-Installer
-          path: release/UltraCloudPhone-Server-Installer.sh
-          retention-days: 30
-
-      - name: Publish GitHub Release downloads
+      - name: Publish APK-only GitHub Release
         if: github.event_name == 'push' && contains(github.event.head_commit.message, 'Publish APK download')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v0.2.${{ github.run_number }}
           name: Ultra Cloud Phone v0.2.${{ github.run_number }}
           body: |
-            Aplicativo cliente Android versão 0.2.0.
-            O instalador experimental do servidor foi publicado como um único arquivo .sh.
-            O arquivo .sh deve ser executado dentro de uma VM Ubuntu ARM64 compatível; não é um APK.
-            O APK ainda requer uma VM compatível configurada e ligada; ele não cria a máquina na nuvem.
+            Download único: UltraCloudPhone.apk.
+            Este é o aplicativo Android instalável.
+            O app cliente ainda precisa de um servidor Android remoto configurado para conectar.
           files: |
             release/UltraCloudPhone.apk
-            release/UltraCloudPhone-Server-Installer.sh
           make_latest: true

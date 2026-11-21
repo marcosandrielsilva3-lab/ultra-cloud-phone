@@ -1,6 +1,6 @@
 # Ultra Cloud Phone
 
-**APK cliente v0.1.2 + instalador do servidor experimental.**
+**APK cliente v0.1.3 + instalador do servidor experimental.**
 
 O aplicativo Android abre a interface noVNC do seu Android virtual remoto dentro do próprio app. Ele não cria sozinho a VM; primeiro é necessário preparar um servidor Linux compatível.
 

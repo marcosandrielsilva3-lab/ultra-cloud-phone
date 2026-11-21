@@ -1,78 +1,72 @@
 # Ultra Cloud Phone
 
-Projeto experimental para executar um Android virtual em uma VM Linux e, numa etapa posterior, transmitir a tela para o celular.
+**Versão 0.3 — primeira tentativa de Cloud Phone controlável pelo navegador.**
 
-**Estado real da versão:** este repositório instala e verifica o Android virtual Redroid em um servidor compatível. Ainda não oferece streaming de vídeo/toque para o celular, não é um serviço de Cloud Gaming pronto e não contém APK cliente.
+O projeto monta um Android virtual no servidor e permite controlá-lo pelo navegador do celular usando Redroid + droidVNC-NG/noVNC + Tailscale.
 
-## O que já está incluído
-- diagnóstico de arquitetura, kernel, Binder, memória e disco;
-- instalador para Ubuntu Server ARM64;
-- Docker e ADB;
-- Android 14 Redroid em container com dados persistentes;
-- ADB publicado somente em `127.0.0.1:5555`;
-- comandos de iniciar, parar, status, logs e backup;
-- GitHub Actions para validar scripts e empacotar o código.
+## Instalação simplificada
 
-## Requisitos
-- VM Ubuntu Server ARM64 (`aarch64`), preferencialmente 22.04/24.04;
-- acesso SSH e permissão sudo;
-- kernel com Binder e dispositivos `/dev/binder`, `/dev/hwbinder`, `/dev/vndbinder`;
-- espaço em disco e RAM suficientes;
-- Docker e imagem Redroid baixados da internet pelo instalador.
+**Importante:** GitHub guarda o instalador, mas não é o servidor que executa Android. É necessária uma VM de nuvem Linux. O instalador foi preparado para Ubuntu Server 22.04/24.04 ARM64 com os módulos Binder exigidos pelo Redroid.
 
-A Oracle Cloud Always Free pode ser testada, mas a disponibilidade de máquinas ARM gratuitas depende da região, das cotas e da capacidade. O uso gratuito não é garantido. Não escolha uma forma paga para contornar falta de capacidade.
-
-## Instalação no servidor
-Depois de criar uma VM Linux compatível e entrar nela por SSH:
+1. Crie uma VM Ubuntu ARM64 e conecte-se a ela por SSH.
+2. Na VM, execute:
 
 ```bash
+sudo apt-get update && sudo apt-get install -y git
 git clone https://github.com/marcosandrielsilva3-lab/ultra-cloud-phone.git
 cd ultra-cloud-phone
-chmod +x server/*.sh tests/*.sh
-sudo ./server/check-host.sh
+sudo bash install.sh
 ```
 
-Leia o diagnóstico. Se arquitetura, kernel ou Binder não forem compatíveis, pare aqui e consulte [solução de problemas](docs/troubleshooting.md). Não instale módulos de kernel aleatórios.
+3. Na primeira execução, autorize o servidor no Tailscale usando o link mostrado. Depois execute novamente `sudo bash install.sh`.
+4. Instale o Tailscale no seu celular e entre na mesma conta.
+5. Ao final, o instalador mostrará o endereço noVNC e a senha. Abra o endereço no Chrome do celular.
 
-Se o diagnóstico estiver adequado:
+O Tailscale Personal tem plano gratuito para uso pessoal (até 6 usuários). Consulte os termos atuais antes de criar a rede: https://tailscale.com/pricing
+
+## Comandos
 
 ```bash
-sudo ./server/install-redroid.sh
-sudo ./server/status.sh
+sudo bash start.sh
+sudo bash status.sh
+sudo bash stop.sh
 ```
 
-Comandos:
-```bash
-sudo ./server/start.sh
-sudo ./server/stop.sh
-sudo ./server/status.sh
-sudo ./server/logs.sh
-sudo ./server/backup.sh
-```
+Os aplicativos e dados do Android virtual ficam em `/opt/ultra-cloud-phone/data` e são preservados ao desligar/iniciar o container. A senha é guardada em `/opt/ultra-cloud-phone/access.txt`, legível apenas por root.
 
-Os dados persistentes ficam em `/opt/ultra-cloud-phone/data`; backups em `/opt/ultra-cloud-phone/backups`.
+## O que a instalação configura
+
+- Redroid Android 14 ARM64 em container Docker.
+- Resolução inicial 720x1280 e limite configurado de 15 FPS para servidor sem GPU.
+- APK oficial mais recente do droidVNC-NG, baixado do release do projeto e validado pelo SHA-256 publicado.
+- Serviço VNC com visualizador noVNC integrado.
+- Tailscale para conexão privada entre servidor e telefone.
+- ADB vinculado somente a `127.0.0.1:5555`.
+- Portas 5800/5900 vinculadas somente ao IP privado do Tailscale.
+
+## Limitações reais
+
+- O instalador falha de propósito se o host não for ARM64 ou não tiver `/dev/binder`, `/dev/hwbinder` e `/dev/vndbinder`.
+- A Oracle Cloud Always Free não garante capacidade em todas as regiões nem compatibilidade do kernel com Binder.
+- A captura de tela do droidVNC-NG pode não funcionar em todo ambiente Android virtualizado. O instalador testa se a página noVNC responde; isso ainda não substitui um teste visual real do vídeo e do toque.
+- A VM gratuita não fornece GPU dedicada garantida. Jogos 3D podem ficar lentos, e não há promessa de FPS alto, ausência de lag, Play Integrity ou compatibilidade com anti-cheat.
+- Alguns jogos detectam emuladores/ambientes virtuais ou bloqueiam a execução.
+- Esta versão usa o navegador; ainda não existe APK próprio Ultra Cloud.
 
 ## Segurança
-- **Nunca abra a porta 5555 no firewall público.** O ADB fica vinculado a `127.0.0.1`.
-- Não publique senhas, chaves SSH privadas, tokens ou dados de pagamento no GitHub.
-- O Redroid usa modo privilegiado do Docker para acessar recursos do kernel; execute somente em uma VM dedicada e confiável.
-- A conexão remota futura deverá usar túnel SSH ou VPN privada e autenticação.
 
-## Limitações importantes
-1. Esta versão ainda não transmite vídeo/áudio nem envia toques do celular para o Android virtual.
-2. Redroid é a camada Android; streaming remoto seguro é uma etapa separada que ainda precisa ser implementada e testada.
-3. Não há garantia de Play Store, Play Integrity ou compatibilidade com todos os jogos.
-4. Sem GPU dedicada, jogos 3D podem ter desempenho baixo. Não há promessa de FPS, ausência de lag ou compatibilidade com Free Fire/Roblox.
-5. O streaming também depende de internet, latência e decodificação de vídeo no telefone.
+- **Nunca exponha ADB (5555) à internet.**
+- Não abra 5800/5900 no IP público. O instalador só publica essas portas no IP Tailscale.
+- Use senha VNC aleatória. Não compartilhe o arquivo `access.txt`.
+- O droidVNC-NG informa que o protocolo VNC não criptografa a sessão inteira; o tráfego deve permanecer dentro da rede privada Tailscale.
+- Nunca publique tokens, senhas, chaves SSH ou dados de pagamento no repositório.
 
-## GitHub Actions
-A cada push ou pull request, o workflow **Validate and package** verifica a sintaxe Bash, executa testes estáticos e cria o artefato ZIP `ultra-cloud-phone-server-kit`. Isso valida o código; não cria nem mantém uma VM Android ligada.
+## Arquivos
 
-## Próximas etapas
-1. validar o diagnóstico em uma VM real;
-2. iniciar Android e confirmar `sys.boot_completed=1`;
-3. implementar uma ponte de vídeo e entrada segura;
-4. testar streaming real no telefone;
-5. somente então decidir se vale criar um APK cliente.
+O projeto foi simplificado para os quatro scripts de operação e este README. O workflow dentro de `.github/workflows` valida o shell e prepara um ZIP de instalação com os arquivos na raiz, sem pastas internas desnecessárias.
 
-Veja [arquitetura](docs/architecture.md) e [solução de problemas](docs/troubleshooting.md).
+## Componentes e documentação
+
+- Redroid: https://github.com/remote-android/redroid-doc
+- droidVNC-NG: https://github.com/bk138/droidVNC-NG
+- Tailscale: https://tailscale.com/docs

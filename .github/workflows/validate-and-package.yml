@@ -48,14 +48,15 @@ jobs:
       - name: Build Android APK
         run: gradle --no-daemon --stacktrace assembleDebug
 
-      - name: Prepare and verify download files
+      - name: Prepare and verify direct downloads
         run: |
           mkdir -p release
           cp app/build/outputs/apk/debug/app-debug.apk release/UltraCloudPhone.apk
-          zip -j release/UltraCloudPhone-Server-Installer.zip README.md install.sh start.sh stop.sh status.sh LICENSE
+          cp install.sh release/UltraCloudPhone-Server-Installer.sh
+          chmod 755 release/UltraCloudPhone-Server-Installer.sh
+          bash -n release/UltraCloudPhone-Server-Installer.sh
           test -s release/UltraCloudPhone.apk
-          test -s release/UltraCloudPhone-Server-Installer.zip
-          zip -T release/UltraCloudPhone-Server-Installer.zip
+          test -s release/UltraCloudPhone-Server-Installer.sh
           AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
           test -x "$AAPT"
           "$AAPT" dump badging release/UltraCloudPhone.apk | grep -F "package: name='com.ultracloud.phone' versionCode='2' versionName='0.2.0'"
@@ -67,11 +68,11 @@ jobs:
           path: release/UltraCloudPhone.apk
           retention-days: 30
 
-      - name: Upload server installer artifact
+      - name: Upload single-file server installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: UltraCloudPhone-Server-Installer
-          path: release/UltraCloudPhone-Server-Installer.zip
+          path: release/UltraCloudPhone-Server-Installer.sh
           retention-days: 30
 
       - name: Publish GitHub Release downloads
@@ -82,10 +83,10 @@ jobs:
           name: Ultra Cloud Phone v0.2.${{ github.run_number }}
           body: |
             Aplicativo cliente Android versão 0.2.0.
-            Inclui correções de layout e instruções claras sobre o endereço noVNC.
-            Também inclui o pacote ZIP do instalador do servidor experimental.
+            O instalador experimental do servidor foi publicado como um único arquivo .sh.
+            O arquivo .sh deve ser executado dentro de uma VM Ubuntu ARM64 compatível; não é um APK.
             O APK ainda requer uma VM compatível configurada e ligada; ele não cria a máquina na nuvem.
           files: |
             release/UltraCloudPhone.apk
-            release/UltraCloudPhone-Server-Installer.zip
+            release/UltraCloudPhone-Server-Installer.sh
           make_latest: true

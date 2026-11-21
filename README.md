@@ -1,89 +1,56 @@
 # Ultra Cloud Phone
 
-**Aplicativo Android cliente v0.2.0 + instalador experimental do servidor.**
+**Aplicativo Android cliente.**
 
-O aplicativo abre o painel noVNC de um Android virtual remoto. Ele não cria sozinho uma máquina na nuvem: primeiro é necessário ter uma VM Linux compatível, instalar o servidor Ultra Cloud Phone nela e ligá-la.
+## Download
 
-## Baixar o aplicativo Android
+Baixe e instale somente o arquivo **UltraCloudPhone.apk** na página de versões:
 
-Abra a página de versões e baixe somente **UltraCloudPhone.apk**:
 https://github.com/marcosandrielsilva3-lab/ultra-cloud-phone/releases/latest
 
-Não baixe **Source code (ZIP)**: esse arquivo é o código-fonte, não é o aplicativo instalável.
+Não há instalador de servidor para instalar no Android. Arquivos `.sh`, ZIP e código-fonte não são aplicativos Android.
 
-## Baixar o instalador do servidor
+## O que o aplicativo faz
 
-Agora existe um download separado de arquivo único chamado **UltraCloudPhone-Server-Installer.sh**:
-https://github.com/marcosandrielsilva3-lab/ultra-cloud-phone/releases/latest/download/UltraCloudPhone-Server-Installer.sh
+O Ultra Cloud Phone abre, dentro do app, o painel noVNC de um Android virtual remoto. Ele permite informar o endereço do servidor, conectar e controlar a tela remota.
 
-**Atenção:** esse arquivo não é um APK e não deve ser instalado no Android. Ele é um script Linux que deve ser executado dentro da VM Ubuntu ARM64 compatível, por SSH. Baixar o arquivo no celular não cria nem liga a VM.
+O aplicativo não cria nem hospeda sozinho uma máquina Android na nuvem. Para a conexão funcionar, ainda é necessário configurar uma máquina Linux compatível em um serviço de nuvem e executar nela os componentes do servidor.
 
-## O que mudou na versão 0.2.0
+## Endereço do servidor
 
-- Corrigido o layout da tela inicial e os textos que apareciam sem largura.
-- Explicação visível de que o campo recebe o endereço do servidor, não um vídeo.
-- Botão **AINDA NÃO TENHO UM SERVIDOR** com instruções e link para este guia.
-- Mensagens de erro mais claras ao tentar conectar.
-- A tela remota mantém o telefone acordado enquanto a sessão está aberta.
-
-## O que colocar no campo de endereço
-
-O campo recebe o endereço do painel **noVNC** impresso pelo instalador do servidor. O formato é parecido com:
+O campo do aplicativo recebe o endereço noVNC fornecido pelo servidor depois da configuração. O formato costuma ser parecido com:
 
 ```
 http://100.x.x.x:5800/vnc.html
 ```
 
-Esse é apenas um exemplo de formato, não um endereço real. Não cole link de vídeo, link do GitHub ou um IP inventado. Sem o servidor instalado e ligado, deixe o campo vazio.
+Esse endereço é apenas um exemplo, não é um servidor real. Não cole link de vídeo ou link do GitHub. Até existir um servidor configurado e ligado, deixe o campo vazio.
 
-O app também aceita somente o IP Tailscale, e completa a porta e o caminho padrão automaticamente.
+## Servidor (etapa técnica separada)
 
-## Preparar o servidor Android virtual
+O servidor experimental foi preparado para Ubuntu Server 22.04/24.04 ARM64 com dispositivos Binder disponíveis no kernel. A instalação deve ser feita no terminal SSH da VM, não no telefone.
 
-O GitHub hospeda os arquivos do projeto, mas não é a máquina que executa o Android. É necessária uma VM de nuvem compatível.
-
-O instalador foi preparado experimentalmente para Ubuntu Server 22.04/24.04 ARM64 com os dispositivos Binder disponíveis no kernel.
-
-1. Crie uma VM Ubuntu ARM64 compatível e conecte-se a ela por SSH.
-2. Dentro do terminal da VM, baixe e execute o script único:
+Os scripts técnicos estão no repositório para quem estiver configurando a VM:
 
 ```bash
-curl -fL https://github.com/marcosandrielsilva3-lab/ultra-cloud-phone/releases/latest/download/UltraCloudPhone-Server-Installer.sh -o UltraCloudPhone-Server-Installer.sh
-sudo bash UltraCloudPhone-Server-Installer.sh
+git clone https://github.com/marcosandrielsilva3-lab/ultra-cloud-phone.git
+cd ultra-cloud-phone
+sudo bash install.sh
 ```
 
-3. Na primeira execução, autorize o servidor no Tailscale usando o link que aparecer. Depois execute novamente:
-
-```bash
-sudo bash UltraCloudPhone-Server-Installer.sh
-```
-
-4. Instale o Tailscale no celular e entre na mesma rede privada.
-5. Se a instalação terminar com sucesso, copie o endereço noVNC e a senha VNC exibidos no final.
-6. Abra o Ultra Cloud Phone, cole o endereço real noVNC e conecte.
-
-## Comandos básicos do servidor
-
-```bash
-sudo docker start ultra-cloud-android
-sudo docker stop ultra-cloud-android
-sudo docker ps --filter name=ultra-cloud-android
-```
-
-Os dados Android ficam em `/opt/ultra-cloud-phone/data`.
+O processo exige autorizar o dispositivo servidor no Tailscale e executar novamente o instalador. O celular também precisa entrar na mesma rede privada.
 
 ## Limitações e segurança
 
-- O instalador é experimental. Ele verifica ARM64, Ubuntu e dispositivos Binder; se o kernel não fornecer o suporte necessário, a instalação para.
-- A disponibilidade de uma VM gratuita ARM64 e a compatibilidade do kernel não são garantidas.
+- A VM gratuita ARM64 pode não estar disponível, e o kernel pode não oferecer Binder.
 - Redroid fornece a camada Android; VNC/noVNC é uma ponte separada. A transmissão precisa ser validada numa VM real.
-- A captura fallback do droidVNC-NG não substitui aceleração gráfica. Sem GPU compatível, o desempenho pode ser limitado.
+- A captura fallback não substitui aceleração gráfica. Sem GPU compatível, o desempenho pode ser limitado.
 - Não há garantia de FPS, ausência de lag, Play Integrity ou compatibilidade com todos os jogos.
 - ADB fica somente em localhost. Não abra a porta 5555 na internet.
 - VNC/noVNC devem permanecer dentro da rede privada Tailscale. Não exponha as portas 5800/5900 no IP público.
 - O APK é o cliente remoto, não contém um Android virtual nem jogos.
 
-## Projeto
+## Componentes do projeto
 
 - Redroid: https://github.com/remote-android/redroid-doc
 - droidVNC-NG: https://github.com/bk138/droidVNC-NG

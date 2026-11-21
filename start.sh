@@ -17,5 +17,5 @@ for _ in $(seq 1 60); do
   sleep 5
 done
 [[ "$(adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == '1' ]] || { echo 'Android não iniciou. Execute sudo bash status.sh.'; exit 1; }
-adb -s 127.0.0.1:5555 shell am start-foreground-service -n "$PKG/.MainService" -a "$PKG.ACTION_START" --es "$PKG.EXTRA_ACCESS_KEY" "$ACCESS_KEY" --ei "$PKG.EXTRA_PORT" "$VNC_PORT" --es "$PKG.EXTRA_PASSWORD" "$VNC_PASSWORD" --ez "$PKG.EXTRA_VIEW_ONLY" false
+adb -s 127.0.0.1:5555 shell am start-foreground-service -n "$PKG/.MainService" -a "$PKG.ACTION_START" --es "$PKG.EXTRA_ACCESS_KEY" "$ACCESS_KEY" --ei "$PKG.EXTRA_PORT" "$VNC_PORT" --es "$PKG.EXTRA_PASSWORD" "$VNC_PASSWORD" --ez "$PKG.EXTRA_VIEW_ONLY" false --ez "$PKG.EXTRA_FALLBACK_SCREEN_CAPTURE" true
 printf 'Cloud Phone ligado. Abra: http://%s:%s/vnc.html?autoconnect=true&host=%s&port=%s\n' "$TAILSCALE_IP" "$WEB_PORT" "$TAILSCALE_IP" "$VNC_PORT"

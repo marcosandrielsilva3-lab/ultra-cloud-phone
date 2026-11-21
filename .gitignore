@@ -1,0 +1,15 @@
+# Local secrets and SSH material
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+secrets/
+# Local generated data
+*.log
+*.tar
+*.tar.gz
+backups/
+data/
+.DS_Store

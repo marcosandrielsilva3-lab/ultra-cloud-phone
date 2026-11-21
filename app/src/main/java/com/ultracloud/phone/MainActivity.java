@@ -275,7 +275,11 @@ public class MainActivity extends Activity {
             if (uri.getHost() == null || uri.getUserInfo() != null) return null;
 
             Uri.Builder b = uri.buildUpon();
-            if (uri.getPort() == -1) b.port(5800);
+            if (uri.getPort() == -1) {
+                String host = uri.getHost();
+                String safeHost = host.contains(":") ? "[" + host + "]" : host;
+                b.encodedAuthority(safeHost + ":5800");
+            }
             String path = uri.getPath();
             if (path == null || path.isEmpty() || path.equals("/")) b.path("/vnc.html");
             if (uri.getQueryParameter("autoconnect") == null) b.appendQueryParameter("autoconnect", "true");

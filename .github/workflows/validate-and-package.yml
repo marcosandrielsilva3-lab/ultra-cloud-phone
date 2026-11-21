@@ -1,4 +1,4 @@
-name: Validate and package installer
+name: Build APK and package server installer
 
 on:
   push:
@@ -9,42 +9,79 @@ permissions:
   contents: write
 
 jobs:
-  package:
+  validate-and-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate shell scripts
+      - name: Validate server shell scripts
         run: |
           bash -n install.sh
           bash -n start.sh
           bash -n stop.sh
           bash -n status.sh
 
-      - name: Check that service ports are private
+      - name: Check private service port bindings
         run: |
           grep -F -- '--publish 127.0.0.1:5555:5555' install.sh
           grep -F -- '--publish "$TAIL_IP:5800:5800"' install.sh
           grep -F -- '--publish "$TAIL_IP:5900:5900"' install.sh
           ! grep -E -- '--publish[[:space:]]+5555:5555' install.sh
 
-      - name: Create clean one-level installer ZIP
-        run: |
-          zip -j ultra-cloud-phone-installer.zip README.md install.sh start.sh stop.sh status.sh LICENSE
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-      - name: Upload ZIP artifact
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build Android APK
+        run: gradle --no-daemon --stacktrace assembleDebug
+
+      - name: Prepare clean download files
+        run: |
+          mkdir -p release
+          cp app/build/outputs/apk/debug/app-debug.apk release/UltraCloudPhone.apk
+          zip -j release/UltraCloudPhone-Server-Installer.zip README.md install.sh start.sh stop.sh status.sh LICENSE
+          test -s release/UltraCloudPhone.apk
+          file release/UltraCloudPhone.apk
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ultra-cloud-phone-installer
-          path: ultra-cloud-phone-installer.zip
+          name: UltraCloudPhone-APK
+          path: release/UltraCloudPhone.apk
           retention-days: 30
 
-      - name: Publish downloadable GitHub Release
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'Publish GitHub download')
+      - name: Upload server installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UltraCloudPhone-Server-Installer
+          path: release/UltraCloudPhone-Server-Installer.zip
+          retention-days: 30
+
+      - name: Publish GitHub Release downloads
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'Publish APK download')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: installer-${{ github.run_number }}
-          name: Ultra Cloud Phone installer ${{ github.run_number }}
-          files: ultra-cloud-phone-installer.zip
+          tag_name: v0.1.${{ github.run_number }}
+          name: Ultra Cloud Phone v0.1.${{ github.run_number }}
+          body: |
+            APK cliente Android para abrir noVNC dentro do app.
+            Requer servidor Android virtual previamente configurado.
+            Este APK não é um servidor Android nem contém jogos.
+          files: |
+            release/UltraCloudPhone.apk
+            release/UltraCloudPhone-Server-Installer.zip
           make_latest: true

@@ -1,0 +1,36 @@
+name: Validate and package
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate Bash syntax
+        run: bash -n server/*.sh tests/*.sh
+      - name: Static safety checks
+        run: bash tests/static-checks.sh
+
+  package:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Package server kit
+        run: zip -r ultra-cloud-phone-server-kit.zip README.md LICENSE server tests docs .github
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ultra-cloud-phone-server-kit
+          path: ultra-cloud-phone-server-kit.zip
+          if-no-files-found: error
+          retention-days: 14

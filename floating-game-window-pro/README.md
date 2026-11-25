@@ -1,9 +1,11 @@
-# Floating Game Window Pro — 0.1.0
+# Roblox Floating Window — experimental
 
-Módulo Android experimental com lista de apps, inicialização e controles flutuantes.
+This Android app launches the installed Roblox app with Android ActivityOptions launch bounds, requesting a small freeform window where the device/launcher supports it.
 
-**Limitação essencial:** Android não permite a um app comum inserir a Activity de outro app numa View própria nem redimensionar a tela de outro jogo. Esta versão move/redimensiona apenas o painel de controle. O jogo continua no app original. Para janela real, use Multi-Window/Pop-up View do fabricante quando disponível.
+Important limitations:
+- It does not embed Roblox inside a custom app view.
+- Android/Samsung must support and allow freeform or pop-up windows for Roblox.
+- If the system ignores launch bounds, Roblox opens full screen. On supported Samsung builds, use Recents > Roblox app icon > Open in pop-up view (if available).
+- Some Galaxy A03s / One UI Core builds may not expose pop-up view for third-party apps.
 
-Recursos: lista de apps iniciáveis, iniciar jogo, sobreposição, painel arrastável, aumentar/diminuir painel, minimizar em bolha e restaurar. Fechar o painel não envia force-stop ao jogo.
-
-Compilação: JDK 17, Gradle 8.9, Android SDK 35; executar gradle assembleDebug nesta pasta.
+Build: JDK 17, Gradle 8.9, Android SDK 35; run gradle assembleDebug.

@@ -36,7 +36,7 @@ jobs:
         with:
           tag_name: floating-game-window-latest
           name: Roblox Floating Window (latest build)
-          body: APK experimental: requests Android/Samsung native freeform window for Roblox. Device support is required; launch bounds may be ignored.
+          body: "APK experimental: requests Android/Samsung native freeform window for Roblox. Device support is required; launch bounds may be ignored."
           files: FloatingGameWindowPro.apk
           overwrite_files: true
           make_latest: true

@@ -1,4 +1,4 @@
-name: Build Floating Game Window Pro
+name: Build Roblox Floating Window APK
 on:
   push:
     paths:
@@ -6,7 +6,7 @@ on:
       - '.github/workflows/floating-game-window.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,9 +27,16 @@ jobs:
       - name: Build debug APK
         working-directory: floating-game-window-pro
         run: gradle --no-daemon assembleDebug
+      - name: Prepare direct APK
+        run: cp floating-game-window-pro/app/build/outputs/apk/debug/app-debug.apk FloatingGameWindowPro.apk
       - name: Verify APK
-        run: test -s floating-game-window-pro/app/build/outputs/apk/debug/app-debug.apk
-      - uses: actions/upload-artifact@v4
+        run: test -s FloatingGameWindowPro.apk
+      - name: Publish direct APK release
+        uses: softprops/action-gh-release@v2
         with:
-          name: FloatingGameWindow
-          path: floating-game-window-pro/app/build/outputs/apk/debug/app-debug.apk
+          tag_name: floating-game-window-latest
+          name: Roblox Floating Window (latest build)
+          body: APK experimental: requests Android/Samsung native freeform window for Roblox. Device support is required; launch bounds may be ignored.
+          files: FloatingGameWindowPro.apk
+          overwrite_files: true
+          make_latest: true
